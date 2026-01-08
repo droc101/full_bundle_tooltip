@@ -23,5 +23,6 @@
     "fabric": "*",
     "minecraft": "${minecraft_version}"
   },
-  "accessWidener": "Bundle_fixes.accesswidener"
+  "accessWidener": "Bundle_fixes.accesswidener",
+  "icon": "assets/bundle_fixes/icon.png"
 }
