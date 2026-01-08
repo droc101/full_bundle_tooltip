@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.droc101.bundle_fixes.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+  ],
+  "client": [
+    "BundleTooltipComponentMixin",
+    "BundleContentsComponentMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

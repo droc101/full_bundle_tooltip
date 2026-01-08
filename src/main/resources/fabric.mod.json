@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "bundle_fixes",
+  "version": "${version}",
+  "name": "Full Bundle Tooltip",
+  "description": "Changes the bundle UI to show all items inside instead of only the first 11-12.",
+  "authors": [
+    {
+      "name": "droc101"
+    }
+  ],
+  "contact": {
+    "homepage": "https://github.com/droc101/full_bundle_tooltip",
+    "issues": "https://github.com/droc101/full_bundle_tooltip/issues"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {},
+  "mixins": [
+    "bundle_fixes.mixins.json"
+  ],
+  "depends": {
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  },
+  "accessWidener": "Bundle_fixes.accesswidener"
+}
