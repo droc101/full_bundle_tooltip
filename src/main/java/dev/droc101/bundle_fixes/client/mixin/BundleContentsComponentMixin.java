@@ -1,17 +1,17 @@
 package dev.droc101.bundle_fixes.client.mixin;
 
-import net.minecraft.component.type.BundleContentsComponent;
+import net.minecraft.world.item.component.BundleContents;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(BundleContentsComponent.class)
+@Mixin(BundleContents.class)
 public class BundleContentsComponentMixin {
 
-    @Inject(method = "getNumberOfStacksShown", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getNumberOfItemsToShow", at = @At("HEAD"), cancellable = true)
     public void getNumberOfStacksShown(CallbackInfoReturnable<Integer> cir) {
-        BundleContentsComponent component = (BundleContentsComponent) (Object) this;
+        BundleContents component = (BundleContents) (Object) this;
         cir.setReturnValue(component.size());
         cir.cancel();
     }
