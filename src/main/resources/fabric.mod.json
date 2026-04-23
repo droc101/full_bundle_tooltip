@@ -20,7 +20,7 @@
     "bundle_fixes.mixins.json"
   ],
   "depends": {
-    "fabric": "*",
+    "fabricloader": "*",
     "minecraft": "${minecraft_version}"
   },
   "accessWidener": "Bundle_fixes.accesswidener",

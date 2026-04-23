@@ -1,8 +1,5 @@
 package dev.droc101.bundle_fixes.client.mixin;
 
-import net.minecraft.client.gui.tooltip.BundleTooltipComponent;
-import net.minecraft.component.type.BundleContentsComponent;
-import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -11,18 +8,26 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(BundleTooltipComponent.class)
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientBundleTooltip;
+import net.minecraft.world.item.component.BundleContents;
+
+@Mixin(ClientBundleTooltip.class)
 public class BundleTooltipComponentMixin {
 
-    @Shadow @Final public BundleContentsComponent bundleContents;
+    @Shadow @Final public BundleContents contents;
     @Unique
     private static final int SLOTS = 64;
 
-    @Shadow @Final private static int SLOT_DIMENSION;
+    @Shadow @Final private static int SLOT_SIZE;
     @Shadow
-    private static final int ROW_WIDTH = SLOT_DIMENSION * 4;
+    private static final int GRID_WIDTH = SLOT_SIZE * 4;
+    
+    @Final @Unique
+    private static final ThreadLocal<Integer> cachedCols = new ThreadLocal<>();
 
     /*
     For 0 - 16 stacks, show 4 columns
@@ -31,7 +36,7 @@ public class BundleTooltipComponentMixin {
      */
     @Unique
     private int getCols() {
-        int size = this.bundleContents.size();
+        int size = this.contents.size();
         if (size > 36) {
             return 8;
         } else if (size > 16) {
@@ -43,68 +48,67 @@ public class BundleTooltipComponentMixin {
 
     @ModifyConstant(method = "getWidth", constant = @Constant(intValue = 96))
     private int getWidth(int original) {
-        return getCols() * SLOT_DIMENSION;
+        return getCols() * SLOT_SIZE;
     }
 
-    @ModifyConstant(method = "getNumVisibleSlots", constant = @Constant(intValue = 12))
-    private int modifyMaxSlots(int _original) {
+    @ModifyConstant(method = "slotCount", constant = @Constant(intValue = 12))
+    private int modifySlotCount(int _original) {
         return SLOTS;
     }
 
-    @ModifyConstant(method = "getXMargin", constant = @Constant(intValue = 96))
-    private int modifyXMargin(int original) {
-        return getCols() * SLOT_DIMENSION;
+    @ModifyConstant(method = "getContentXOffset", constant = @Constant(intValue = 96))
+    private static int modifyXOffset(int original) {
+        return cachedCols.get() * SLOT_SIZE;
+    }
+    
+    @Inject(method = "extractImage", at = @At("HEAD"))
+    private void cacheCols(Font font, int x, int y, int w, int h, GuiGraphicsExtractor graphics, CallbackInfo ci) {
+		cachedCols.set(getCols());
+	}
+
+    @ModifyConstant(method = "extractProgressbar", constant = @Constant(intValue = 96))
+    private static int modifyProgressBarWidth(int original) {
+        return cachedCols.get() * SLOT_SIZE;
     }
 
-    @ModifyConstant(method = "drawProgressBar", constant = @Constant(intValue = 96))
-    private int modifyProgressBarWidth(int original) {
-        return getCols() * SLOT_DIMENSION;
-    }
-
-    @ModifyConstant(method = "drawProgressBar", constant = @Constant(intValue = 48))
-    private int modifyProgressBarTextPos(int original) {
-        return (getCols() * SLOT_DIMENSION) / 2;
+    @ModifyConstant(method = "extractProgressbar", constant = @Constant(intValue = 48))
+    private static int modifyProgressBarTextPos(int original) {
+        return (cachedCols.get() * SLOT_SIZE) / 2;
     }
 
     @ModifyConstant(method = "getProgressBarFill", constant = @Constant(intValue = 94))
-    private int modifyProgressBarFill(int original) {
-        return (getCols() * SLOT_DIMENSION) - 2;
+    private static int modifyProgressBarFill(int original) {
+        return (cachedCols.get() * SLOT_SIZE) - 2;
     }
 
-    @ModifyConstant(method = "drawEmptyDescription", constant = @Constant(intValue = 96))
+    @ModifyConstant(method = "extractEmptyBundleDescriptionText", constant = @Constant(intValue = 96))
     private static int modifyEmptyDescriptionWidth(int original) {
-        return ROW_WIDTH;
+        return GRID_WIDTH;
     }
 
-    @ModifyConstant(method = "getDescriptionHeight", constant = @Constant(intValue = 96))
+    @ModifyConstant(method = "getEmptyBundleDescriptionTextHeight", constant = @Constant(intValue = 96))
     private static int modifyDescriptionWidth(int original) {
-        return ROW_WIDTH;
+        return GRID_WIDTH;
     }
 
-    @ModifyConstant(method = "getRows", constant = @Constant(intValue = 4))
+    @ModifyConstant(method = "gridSizeY", constant = @Constant(intValue = 4))
     private int modifyMaxCols(int _original) {
         return getCols();
     }
 
-    @ModifyConstant(method="drawNonEmptyTooltip", constant = @Constant(intValue = 12))
+    @ModifyConstant(method="extractBundleWithItemsTooltip", constant = @Constant(intValue = 12))
     private int modifyMaxNonEmptyTooltipSlots(int _original) {
         return SLOTS;
     }
 
-    @ModifyConstant(method="drawNonEmptyTooltip", constant = @Constant(intValue = 4))
+    @ModifyConstant(method="extractBundleWithItemsTooltip", constant = @Constant(intValue = 4))
     private int modifyMaxNonEmptyTooltipCols(int _original) {
         return getCols();
     }
 
-    @ModifyConstant(method="drawNonEmptyTooltip", constant = @Constant(intValue = 96))
+    @ModifyConstant(method="extractBundleWithItemsTooltip", constant = @Constant(intValue = 96))
     private int modifyMaxNonEmptyTooltipWidth(int _original) {
-        return (getCols() * SLOT_DIMENSION);
-    }
-
-    @Inject(method = "getProgressBarLabel", at = @At("HEAD"), cancellable = true)
-    private void getProgressBarLabel(CallbackInfoReturnable<Text> cir) {
-        cir.setReturnValue(Text.of(String.format("%d/64", (int)(bundleContents.getOccupancy().doubleValue() * 64.0))));
-        cir.cancel();
+        return (getCols() * SLOT_SIZE);
     }
 
 }
