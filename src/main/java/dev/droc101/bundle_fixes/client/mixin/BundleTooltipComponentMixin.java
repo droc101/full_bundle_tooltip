@@ -1,5 +1,7 @@
 package dev.droc101.bundle_fixes.client.mixin;
 
+import net.minecraft.network.chat.Component;
+import org.apache.commons.lang3.math.Fraction;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,6 +16,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientBundleTooltip;
 import net.minecraft.world.item.component.BundleContents;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ClientBundleTooltip.class)
 public class BundleTooltipComponentMixin {
@@ -28,6 +31,9 @@ public class BundleTooltipComponentMixin {
     
     @Final @Unique
     private static final ThreadLocal<Integer> cachedCols = new ThreadLocal<>();
+
+    @Final @Unique
+    private static final ThreadLocal<Double> cachedWeight = new ThreadLocal<>();
 
     /*
     For 0 - 16 stacks, show 4 columns
@@ -62,8 +68,9 @@ public class BundleTooltipComponentMixin {
     }
     
     @Inject(method = "extractImage", at = @At("HEAD"))
-    private void cacheCols(Font font, int x, int y, int w, int h, GuiGraphicsExtractor graphics, CallbackInfo ci) {
+    private void cacheContents(Font font, int x, int y, int w, int h, GuiGraphicsExtractor graphics, CallbackInfo ci) {
 		cachedCols.set(getCols());
+        cachedWeight.set(contents.weight().getOrThrow().doubleValue());
 	}
 
     @ModifyConstant(method = "extractProgressbar", constant = @Constant(intValue = 96))
@@ -109,6 +116,14 @@ public class BundleTooltipComponentMixin {
     @ModifyConstant(method="extractBundleWithItemsTooltip", constant = @Constant(intValue = 96))
     private int modifyMaxNonEmptyTooltipWidth(int _original) {
         return (getCols() * SLOT_SIZE);
+    }
+
+    @Inject(method="getProgressBarFillText", at=@At("HEAD"), cancellable = true)
+    private static void getProgressBarFillText(Fraction weight, CallbackInfoReturnable<Component> cir) {
+        int currentCapacity = (int)(cachedWeight.get() * 64.0);
+        Component text = Component.translatable("item.minecraft.bundle.capacity", currentCapacity, SLOTS);
+        cir.setReturnValue(text);
+        cir.cancel();
     }
 
 }
